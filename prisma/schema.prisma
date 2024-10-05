@@ -1,0 +1,578 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Center {
+  id             String           @id @default(uuid())
+  centerName     String
+  mode           CenterMode       @default(VIRTUAL)
+  user           User             @relation(fields: [createdBy], references: [id])
+  createdBy      String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt()
+  userCenter     userCenter[]
+  Inventory      Inventory[]
+  VoucherCenter  VoucherCenter[]
+  voucherProduct voucherProduct[]
+}
+
+model companyDetails {
+  id          String  @id @default(uuid())
+  companyName String?
+  telPhone1   String?
+  telPhone2   String?
+  email       String?
+  address1    String?
+  address2    String?
+}
+
+model User {
+  id                    String                  @id @default(uuid())
+  name                  String
+  nic                   String?                 @unique
+  phoneNumber           String?                 @unique
+  address               String?
+  dateofbirth           DateTime?
+  target                Decimal?
+  username              String                  @unique
+  password              String
+  isconform             Boolean                 @default(false)
+  role                  Role                    @default(SALESMEN)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  Party                 Party[]
+  Product               Product[]
+  userCenter            userCenter[]
+  Center                Center[]
+  Brand                 Brand[]
+  Type                  Type[]
+  ChartofAccount        ChartofAccount[]
+  journalLine           journalLine[]
+  AccountSubCategory    AccountSubCategory[]
+  AccountGroup          AccountGroup[]
+  partyCategory         partyCategory[]
+  ChequeBook            ChequeBook[]
+  Cheque                Cheque[]
+  discountLevel         discountLevel[]
+  productDiscountLevel  productDiscountLevel[]
+  referVouchers         referVouchers[]
+  pettycashIOU          pettycashIOU[]          @relation("UserIOU")
+  createdPettycashIOU   pettycashIOU[]          @relation("CreatedByUserIOU")
+  pettyCashIOUDetails   pettyCashIOUDetails[]
+  vistingCustomer       vistingCustomer[]
+  commissionLevel       commissionLevel[]
+  productcommissionRate productcommissionRate[]
+  partyType             partyType[]
+  userAuth              Voucher[]               @relation("UserAuth")
+  createdbyUserVoucher  Voucher[]               @relation("CreatedByUserVoucher")
+}
+
+model userCenter {
+  center   Center @relation(fields: [centerId], references: [id])
+  centerId String
+  user     User   @relation(fields: [userId], references: [id])
+  userId   String
+
+  @@id([centerId, userId])
+}
+
+model PartyGroup {
+  id             String          @id @default(uuid())
+  partyGroupName String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  party          Party[]
+  partyCategory  partyCategory[]
+}
+
+model Party {
+  id               String            @id @default(uuid())
+  name             String
+  nic              String?
+  phoneNumber      String?           @unique
+  address1         String?
+  address2         String?
+  city             String?
+  creditPeriod     String?
+  creditValue      String?
+  email            String?
+  isVerified       Boolean?
+  partyCategory    partyCategory?    @relation(fields: [partyCategoryId], references: [id])
+  partyCategoryId  String?
+  partyType        partyType?        @relation(fields: [partyTypeId], references: [id])
+  partyTypeId      String?
+  chartofacc       ChartofAccount?   @relation(fields: [chartofAccountId], references: [id])
+  chartofAccountId String?
+  PartyGroup       PartyGroup        @relation(fields: [partyGroupId], references: [id])
+  partyGroupId     String
+  user             User              @relation(fields: [createdBy], references: [id])
+  createdBy        String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  Voucher          Voucher[]
+  partyproofimage  partyproofimage[]
+  vistingCustomer  vistingCustomer[]
+}
+
+model partyCategory {
+  id           String     @id @default(uuid())
+  category     String
+  PartyGroup   PartyGroup @relation(fields: [partyGroupId], references: [id])
+  partyGroupId String
+  isEditable   Boolean    @default(true)
+  user         User       @relation(fields: [createdBy], references: [id])
+  createdBy    String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  Party        Party[]
+}
+
+model partyType {
+  id        String   @id @default(uuid())
+  type      String
+  user      User     @relation(fields: [createdBy], references: [id])
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Party     Party[]
+}
+
+model vistingCustomer {
+  id        String   @id @default(uuid())
+  party     Party    @relation(fields: [partyId], references: [id])
+  partyId   String
+  note      String?
+  status    String?
+  user      User     @relation(fields: [createdBy], references: [id])
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model proofimage {
+  id              String            @id @default(uuid())
+  name            String
+  partyproofimage partyproofimage[]
+}
+
+model partyproofimage {
+  party        Party      @relation(fields: [partyId], references: [id])
+  partyId      String
+  proofimage   proofimage @relation(fields: [proofimageId], references: [id])
+  proofimageId String
+  imageName    String
+
+  @@id([partyId, proofimageId])
+}
+
+model VoucherGroup {
+  id            String        @id @default(uuid())
+  voucherName   String
+  shortname     String
+  inventoryMode InventoryMode
+  isAccount     Boolean
+  label         String?
+  category      String?
+  isSidemenu    Boolean?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  voucher       Voucher[]
+}
+
+model Voucher {
+  id               String           @id @default(uuid())
+  voucherNumber    String           @unique
+  date             DateTime?
+  totalDebit       Decimal?
+  totalCredit      Decimal?
+  amount           Decimal?
+  location         String?
+  paidValue        Decimal?
+  refNumber        String?
+  refVoucherNumber String?
+  isRef            Boolean          @default(false)
+  note             String?
+  dueDays          Int?
+  isconform        Boolean          @default(true)
+  party            Party?           @relation(fields: [partyId], references: [id])
+  partyId          String?
+  chartofacc       ChartofAccount?  @relation(fields: [chartofAccountId], references: [id])
+  chartofAccountId String?
+  voucherGroup     VoucherGroup     @relation(fields: [voucherGroupId], references: [id])
+  voucherGroupId   String
+  user             User?            @relation("UserAuth", fields: [authUser], references: [id])
+  authUser         String?
+  createdByUser    User             @relation("CreatedByUserVoucher", fields: [createdBy], references: [id])
+  createdBy        String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  PaymentVoucher   PaymentVoucher[]
+  voucherProduct   voucherProduct[]
+  VoucherCenter    VoucherCenter[]
+  journalLine      journalLine[]
+  Cheque           Cheque[]
+  referVouchers    referVouchers[]
+  pettycashIOU     pettycashIOU[]
+}
+
+model pettycashIOU {
+  id                  String                @id @default(uuid())
+  userid              String
+  amount              Decimal?
+  spent               Decimal?
+  returnDate          DateTime?
+  returnAmount        Decimal?
+  voucher             Voucher               @relation(fields: [voucherId], references: [id])
+  voucherId           String
+  isReturn            Boolean               @default(false)
+  isDelete            Boolean               @default(false)
+  user                User                  @relation("UserIOU", fields: [userid], references: [id])
+  createdByUser       User                  @relation("CreatedByUserIOU", fields: [createdBy], references: [id])
+  createdBy           String
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  pettyCashIOUDetails pettyCashIOUDetails[]
+}
+
+model pettyCashIOUDetails {
+  id             String       @id @default(uuid())
+  refnumber      String?
+  description    String?
+  amount         Decimal?
+  pettycashIOU   pettycashIOU @relation(fields: [pettycashIOUId], references: [id])
+  pettycashIOUId String
+  user           User         @relation(fields: [createdBy], references: [id])
+  createdBy      String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model referVouchers {
+  id               String   @id @default(uuid())
+  refVoucherNumber String
+  invoiceDate      DateTime
+  invoiceAmount    Decimal
+  settledAmount    Decimal
+  paidAmount       Decimal
+  voucher          Voucher  @relation(fields: [voucherId], references: [id])
+  voucherId        String
+  isdelete         Boolean  @default(false)
+  user             User     @relation(fields: [createdBy], references: [id])
+  createdBy        String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model VoucherCenter {
+  center       Center       @relation(fields: [centerId], references: [id])
+  centerId     String
+  voucher      Voucher      @relation(fields: [voucherId], references: [id])
+  voucherId    String
+  centerStatus centerStatus
+
+  @@id([centerId, voucherId])
+}
+
+model Payment {
+  id             String           @id @default(uuid())
+  type           String?
+  PaymentVoucher PaymentVoucher[]
+}
+
+model PaymentVoucher {
+  id          String   @id @default(uuid())
+  amount      Decimal
+  paymentType String?
+  refNumber   String?
+  payment     Payment  @relation(fields: [paymentId], references: [id])
+  paymentId   String
+  voucher     Voucher  @relation(fields: [voucherId], references: [id])
+  voucherId   String
+  Cheque      Cheque[]
+}
+
+model Brand {
+  id        String    @id @default(uuid())
+  brandName String    @unique
+  user      User      @relation(fields: [createdBy], references: [id])
+  createdBy String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Product   Product[]
+}
+
+model Type {
+  id        String    @id @default(uuid())
+  typeName  String    @unique
+  user      User      @relation(fields: [createdBy], references: [id])
+  createdBy String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Product   Product[]
+}
+
+model Product {
+  id                    String                  @id @default(uuid())
+  unit                  Unit                    @default(PCS)
+  itemCode              String?                 @unique()
+  barcode               String?
+  productName           String
+  printName             String?
+  image                 String?
+  criticalLevel         Int?
+  cost                  Decimal?
+  minPrice              Decimal?
+  MRP                   Decimal?
+  sellingPrice          Decimal?
+  status                Boolean                 @default(true)
+  type                  Type                    @relation(fields: [typeId], references: [id])
+  typeId                String
+  brand                 Brand?                  @relation(fields: [brandId], references: [id])
+  brandId               String?
+  user                  User                    @relation(fields: [createdBy], references: [id])
+  createdBy             String
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  Inventory             Inventory[]
+  voucherProduct        voucherProduct[]
+  OEMNumber             OEMNumber[]
+  productDiscountLevel  productDiscountLevel[]
+  productcommissionRate productcommissionRate[]
+}
+
+model OEMNumber {
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  OEMnumber String
+
+  @@id([OEMnumber, productId])
+}
+
+model commissionLevel {
+  id                    String                  @id @default(uuid())
+  commissionlevel       String
+  days                  Int?
+  user                  User                    @relation(fields: [createdBy], references: [id])
+  createdBy             String
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  productcommissionRate productcommissionRate[]
+}
+
+model productcommissionRate {
+  product          Product         @relation(fields: [productId], references: [id])
+  productId        String
+  commission       commissionLevel @relation(fields: [commissionRateId], references: [id])
+  commissionRateId String
+  commissionRate   String
+
+  user      User     @relation(fields: [createdBy], references: [id])
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([productId, commissionRateId])
+}
+
+model discountLevel {
+  id                   String                 @id @default(uuid())
+  level                String
+  days                 Int?
+  user                 User                   @relation(fields: [createdBy], references: [id])
+  createdBy            String
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  productDiscountLevel productDiscountLevel[]
+}
+
+model productDiscountLevel {
+  product         Product       @relation(fields: [productId], references: [id])
+  productId       String
+  discountLevel   discountLevel @relation(fields: [discountLevelId], references: [id])
+  discountLevelId String
+  discountRate    String
+
+  user      User     @relation(fields: [createdBy], references: [id])
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([productId, discountLevelId])
+}
+
+model voucherProduct {
+  id           String   @id @default(uuid())
+  cost         Decimal
+  quantity     Decimal
+  discount     String
+  MRP          Decimal
+  minPrice     Decimal?
+  sellingPrice Decimal
+  amount       Decimal
+  remainingQty Decimal?
+  isdisabale   Boolean  @default(false)
+  voucher      Voucher  @relation(fields: [voucherId], references: [id])
+  voucherId    String
+  product      Product  @relation(fields: [productId], references: [id])
+  productId    String
+  center       Center?  @relation(fields: [centerId], references: [id])
+  centerId     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Inventory {
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  center    Center   @relation(fields: [centerId], references: [id])
+  centerId  String
+  quantity  Decimal?
+  status    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([productId, centerId])
+}
+
+model AccountCategory {
+  id                 String               @id @default(uuid())
+  accCategory        String
+  AccountSubCategory AccountSubCategory[]
+}
+
+model AccountSubCategory {
+  id                String           @id @default(uuid())
+  accountSubName    String
+  AccountCategory   AccountCategory  @relation(fields: [accountCategoryId], references: [id])
+  accountCategoryId String
+  user              User             @relation(fields: [createdBy], references: [id])
+  createdBy         String
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  ChartofAccount    ChartofAccount[]
+}
+
+model AccountGroup {
+  id               String           @id @default(uuid())
+  accountGroupName String
+  user             User             @relation(fields: [createdBy], references: [id])
+  createdBy        String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  ChartofAccount   ChartofAccount[]
+}
+
+model ChartofAccount {
+  id                   String              @id @default(uuid())
+  accountName          String
+  AccountSubCategory   AccountSubCategory? @relation(fields: [accountSubCategoryId], references: [id])
+  accountSubCategoryId String?
+  accGroup             AccountGroup?       @relation(fields: [accountGroupId], references: [id])
+  accountGroupId       String?
+  Opening_Balance      Decimal?
+  user                 User                @relation(fields: [createdBy], references: [id])
+  createdBy            String
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  journalLine          journalLine[]
+  Party                Party[]
+  ChequeBook           ChequeBook[]
+  Voucher              Voucher[]
+}
+
+model ChequeBook {
+  id               String         @id @default(uuid())
+  chequeBookNumber String
+  totalCheques     Int
+  startNumber      String
+  endNumber        String
+  remainingCheques Int
+  account          ChartofAccount @relation(fields: [chartofAccountId], references: [id])
+  chartofAccountId String
+  user             User           @relation(fields: [createdBy], references: [id])
+  createdBy        String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  Cheque           Cheque[]
+}
+
+model Cheque {
+  id               String          @id @default(uuid())
+  chequeNumber     String          @unique
+  chequeBankName   String?
+  issueDate        DateTime?
+  releaseDate      DateTime?
+  amount           Decimal
+  month            String?
+  year             String?
+  used             Boolean         @default(false)
+  creditDebit      CreditDebit
+  chequeBook       ChequeBook?     @relation(fields: [chequeBookId], references: [id])
+  chequeBookId     String?
+  voucher          Voucher?        @relation(fields: [voucherId], references: [id])
+  voucherId        String?
+  paymentVoucher   PaymentVoucher? @relation(fields: [paymentVoucherId], references: [id])
+  paymentVoucherId String?
+  user             User            @relation(fields: [createdBy], references: [id])
+  createdBy        String
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+model journalLine {
+  id               String         @id @default(uuid())
+  journal          Voucher?       @relation(fields: [voucherId], references: [id])
+  voucherId        String?
+  account          ChartofAccount @relation(fields: [chartofAccountId], references: [id])
+  chartofAccountId String
+  debitAmount      Decimal?
+  creditAmount     Decimal?
+  ref              String?
+  user             User           @relation(fields: [createdBy], references: [id])
+  createdBy        String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  SALESMEN
+}
+
+enum CenterMode {
+  VIRTUAL
+  PHYSICAL
+}
+
+enum Unit {
+  PCS
+}
+
+enum InventoryMode {
+  PLUS
+  MINUS
+  DOUBLE
+  NONE
+}
+
+enum centerStatus {
+  IN
+  OUT
+}
+
+enum CreditDebit {
+  CREDIT
+  DEBIT
+}
